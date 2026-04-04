@@ -72,6 +72,8 @@ On startup, `plugin_loader` scans `providers/player/` and `providers/lyrics/`, c
 
 Adding a new provider: drop a file in the folder, set its `name` in config. No core changes.
 
+If the provider specified in config is not found among loaded plugins, exit with error: "Provider '<name>' not found in providers/<type>/". If a plugin file fails to load or is missing required fields, skip it with a warning and continue loading others.
+
 ## Spotify Player
 
 ### Authentication
