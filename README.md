@@ -189,6 +189,10 @@ Your refresh token takes care of re-auth, so you're not pasting a new token ever
 
 **Lyrics are out of sync** -- Lower `timer_interval` to 100 in config. Spotify's position reporting isn't perfect.
 
+## Credits
+
+Inspired by [sptlrx](https://github.com/raitonoberu/sptlrx) by raitonoberu.
+
 ## License
 
 AGPL-3.0
