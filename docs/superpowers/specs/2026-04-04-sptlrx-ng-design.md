@@ -1,4 +1,4 @@
-# sptlrx-ng Design Spec
+# sptlrx-cc Design Spec
 
 Modular Lua utility for CC:Tweaked that displays synchronized Spotify lyrics in karaoke style.
 
@@ -14,7 +14,7 @@ Modular Lua utility for CC:Tweaked that displays synchronized Spotify lyrics in 
 ## Architecture: Monolithic Core + Plugin Folders
 
 ```
-sptlrx-ng/
+sptlrx-cc/
 ├── sptlrx.lua              -- entry point
 ├── config.lua               -- user config (Lua table)
 ├── core/

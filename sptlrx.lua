@@ -1,4 +1,4 @@
--- sptlrx-ng: Synchronized Spotify lyrics for CC:Tweaked
+-- sptlrx-cc: Synchronized Spotify lyrics for CC:Tweaked
 
 -- Resolve base directory from running program path
 local program_path = shell.getRunningProgram()

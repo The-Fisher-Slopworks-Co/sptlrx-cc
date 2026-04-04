@@ -27,7 +27,7 @@ local function fetch_exact(artist, title)
         .. "&track_name=" .. url_encode(title)
 
     local response = http.get(url, {
-        ["User-Agent"] = "sptlrx-ng v1.0.0",
+        ["User-Agent"] = "sptlrx-cc v1.0.0",
     })
 
     if not response then return nil end
@@ -48,7 +48,7 @@ local function fetch_search(query)
     local url = BASE_URL .. "/search?q=" .. url_encode(query)
 
     local response = http.get(url, {
-        ["User-Agent"] = "sptlrx-ng v1.0.0",
+        ["User-Agent"] = "sptlrx-cc v1.0.0",
     })
 
     if not response then return nil end

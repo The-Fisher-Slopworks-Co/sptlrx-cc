@@ -17,9 +17,9 @@ describe("plugin_loader.scan", function()
             get_state = function(self) return { track_id = "1" }, nil end,
         }
         package.loaded["providers.player.test_player"] = fake_provider
-        fs._set("sptlrx-ng/providers/player", { "test_player.lua" })
+        fs._set("sptlrx-cc/providers/player", { "test_player.lua" })
 
-        local providers = plugin_loader.scan("sptlrx-ng/providers/player", "player")
+        local providers = plugin_loader.scan("sptlrx-cc/providers/player", "player")
         expect(#providers).to_equal(1)
         expect(providers[1].name).to_equal("test_player")
 
@@ -33,9 +33,9 @@ describe("plugin_loader.scan", function()
             get_state = function(self) return {}, nil end,
         }
         package.loaded["providers.player.bad"] = bad_provider
-        fs._set("sptlrx-ng/providers/player", { "bad.lua" })
+        fs._set("sptlrx-cc/providers/player", { "bad.lua" })
 
-        local providers = plugin_loader.scan("sptlrx-ng/providers/player", "player")
+        local providers = plugin_loader.scan("sptlrx-cc/providers/player", "player")
         expect(#providers).to_equal(0)
 
         package.loaded["providers.player.bad"] = nil
@@ -48,9 +48,9 @@ describe("plugin_loader.scan", function()
             setup = function(config) return {}, nil end,
         }
         package.loaded["providers.player.no_state"] = bad_provider
-        fs._set("sptlrx-ng/providers/player", { "no_state.lua" })
+        fs._set("sptlrx-cc/providers/player", { "no_state.lua" })
 
-        local providers = plugin_loader.scan("sptlrx-ng/providers/player", "player")
+        local providers = plugin_loader.scan("sptlrx-cc/providers/player", "player")
         expect(#providers).to_equal(0)
 
         package.loaded["providers.player.no_state"] = nil
@@ -63,9 +63,9 @@ describe("plugin_loader.scan", function()
             setup = function(config) return {}, nil end,
         }
         package.loaded["providers.lyrics.no_lyrics"] = bad_provider
-        fs._set("sptlrx-ng/providers/lyrics", { "no_lyrics.lua" })
+        fs._set("sptlrx-cc/providers/lyrics", { "no_lyrics.lua" })
 
-        local providers = plugin_loader.scan("sptlrx-ng/providers/lyrics", "lyrics")
+        local providers = plugin_loader.scan("sptlrx-cc/providers/lyrics", "lyrics")
         expect(#providers).to_equal(0)
 
         package.loaded["providers.lyrics.no_lyrics"] = nil

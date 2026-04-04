@@ -1,4 +1,4 @@
-# sptlrx-ng
+# sptlrx-cc
 
 Karaoke-style lyrics in your Minecraft terminal. Talks to Spotify to figure out what's playing, grabs lyrics from LRCLib, and scrolls them in time with the music.
 
@@ -25,7 +25,7 @@ The bright line in the middle is what's playing right now. Everything else is di
 Drop the whole folder onto your CC:Tweaked computer:
 
 ```
-/sptlrx-ng/
+/sptlrx-cc/
 ├── sptlrx.lua
 ├── config.lua
 ├── core/
@@ -67,7 +67,7 @@ return {
 ### 4. Run it
 
 ```
-> sptlrx-ng/sptlrx
+> sptlrx-cc/sptlrx
 ```
 
 Play something on Spotify. Lyrics show up in a couple seconds. Ctrl+T to quit.
@@ -156,7 +156,7 @@ Set `lyrics = "my_source"` in config.
 ## Project structure
 
 ```
-sptlrx-ng/
+sptlrx-cc/
 ├── sptlrx.lua              -- entry point
 ├── config.lua               -- your settings
 ├── core/

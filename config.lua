@@ -1,4 +1,4 @@
--- sptlrx-ng configuration
+-- sptlrx-cc configuration
 -- Edit this file with your Spotify credentials and preferences.
 
 return {

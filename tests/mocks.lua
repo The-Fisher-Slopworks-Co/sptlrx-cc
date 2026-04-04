@@ -106,8 +106,8 @@ function mocks.setup()
     }, { __index = original_os })
 
     _G.shell = {
-        getRunningProgram = function() return "sptlrx-ng/sptlrx.lua" end,
-        _program = "sptlrx-ng/sptlrx.lua",
+        getRunningProgram = function() return "sptlrx-cc/sptlrx.lua" end,
+        _program = "sptlrx-cc/sptlrx.lua",
     }
 
     _G.printError = function(msg) print("ERROR: " .. tostring(msg)) end
