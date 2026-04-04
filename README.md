@@ -191,4 +191,4 @@ Your refresh token takes care of re-auth, so you're not pasting a new token ever
 
 ## License
 
-MIT
+AGPL-3.0
