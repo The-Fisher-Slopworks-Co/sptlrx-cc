@@ -17,44 +17,33 @@ describe("lrclib provider", function()
     end)
 end)
 
-describe("lrclib._latin1_to_utf8", function()
-    it("passes ASCII through unchanged", function()
-        expect(lrclib._latin1_to_utf8("Hello")).to_equal("Hello")
+describe("lrclib._url_encode", function()
+    it("passes simple ASCII through", function()
+        expect(lrclib._url_encode("hello")).to_equal("hello")
     end)
 
-    it("converts Latin-1 byte 0xF1 (ñ) to UTF-8 C3 B1", function()
-        local latin1 = string.char(0xF1) -- ñ as single Latin-1 byte
-        local utf8 = lrclib._latin1_to_utf8(latin1)
-        expect(utf8).to_equal(string.char(0xC3, 0xB1))
+    it("encodes spaces as %20", function()
+        expect(lrclib._url_encode("hello world")).to_equal("hello%20world")
     end)
 
-    it("converts Latin-1 byte 0xE9 (é) to UTF-8 C3 A9", function()
-        local latin1 = string.char(0xE9)
-        local utf8 = lrclib._latin1_to_utf8(latin1)
-        expect(utf8).to_equal(string.char(0xC3, 0xA9))
+    it("encodes UTF-8 Cyrillic bytes individually", function()
+        -- "т" = D1 82 in UTF-8
+        local input = string.char(0xD1, 0x82)
+        expect(lrclib._url_encode(input)).to_equal("%D1%82")
     end)
 
-    it("handles mixed ASCII and Latin-1", function()
-        -- "Señorita" with ñ as Latin-1 byte 0xF1
-        local latin1 = "Se" .. string.char(0xF1) .. "orita"
-        local utf8 = lrclib._latin1_to_utf8(latin1)
-        expect(utf8).to_equal("Se" .. string.char(0xC3, 0xB1) .. "orita")
-    end)
-end)
-
-describe("lrclib._strip_non_ascii", function()
-    it("passes ASCII through unchanged", function()
-        expect(lrclib._strip_non_ascii("Hello World")).to_equal("Hello World")
+    it("encodes mixed ASCII and UTF-8", function()
+        -- "ok т" = 6F 6B 20 D1 82
+        local input = "ok " .. string.char(0xD1, 0x82)
+        expect(lrclib._url_encode(input)).to_equal("ok%20%D1%82")
     end)
 
-    it("strips non-ASCII bytes", function()
-        local s = "D" .. string.char(0xE9) .. "j" .. string.char(0xE0) .. " Vu"
-        expect(lrclib._strip_non_ascii(s)).to_equal("Dj Vu")
+    it("preserves unreserved characters", function()
+        expect(lrclib._url_encode("a-b_c.d~e")).to_equal("a-b_c.d~e")
     end)
 
-    it("collapses multiple spaces", function()
-        local s = "A" .. string.char(0xE9, 0xE8) .. "B"
-        expect(lrclib._strip_non_ascii(s)).to_equal("AB")
+    it("encodes special characters", function()
+        expect(lrclib._url_encode("a&b=c")).to_equal("a%26b%3Dc")
     end)
 end)
 
@@ -132,35 +121,31 @@ describe("lrclib.get_lyrics", function()
         textutils._json_responses = {}
     end)
 
-    it("falls back to ASCII-stripped search for non-ASCII names", function()
-        -- Exact match with latin1→utf8 encoded URL fails
-        local exact_url = "https://lrclib.net/api/get?artist_name=Se%C3%B1orita&track_name=Song"
+    it("encodes Cyrillic UTF-8 in search URL", function()
+        -- Exact match fails
+        -- "т" in UTF-8 is D1 82
+        local artist = string.char(0xD1, 0x82) -- "т"
+        local title = "song"
+        local exact_url = "https://lrclib.net/api/get?artist_name=%D1%82&track_name=song"
         http._set_response(exact_url, 404, "")
 
-        -- UTF-8 search also fails
-        local utf8_search_url = "https://lrclib.net/api/search?q=Se%C3%B1orita%20Song"
-        http._set_response(utf8_search_url, 200, "empty1")
-        textutils._json_responses["empty1"] = {}
-
-        -- ASCII-stripped search succeeds
-        local stripped_search_body = "stripped_result"
-        textutils._json_responses[stripped_search_body] = {
+        -- Search with properly encoded UTF-8
+        local search_body = "cyrillic_result"
+        textutils._json_responses[search_body] = {
             {
-                syncedLyrics = "[00:01.00]Found via stripped",
-                plainLyrics = "Found via stripped",
+                syncedLyrics = "[00:01.00]Found cyrillic",
+                plainLyrics = "Found cyrillic",
             },
         }
-        local stripped_search_url = "https://lrclib.net/api/search?q=Seorita%20Song"
-        http._set_response(stripped_search_url, 200, stripped_search_body)
+        local search_url = "https://lrclib.net/api/search?q=%D1%82%20song"
+        http._set_response(search_url, 200, search_body)
 
-        -- Artist name with Latin-1 ñ (byte 0xF1)
-        local artist = "Se" .. string.char(0xF1) .. "orita"
         local instance, _ = lrclib.setup({})
-        local lines, err = lrclib.get_lyrics(instance, artist, "Song")
+        local lines, err = lrclib.get_lyrics(instance, artist, title)
 
         expect(err).to_be_nil()
         expect(#lines).to_equal(1)
-        expect(lines[1].text).to_equal("Found via stripped")
+        expect(lines[1].text).to_equal("Found cyrillic")
 
         http._clear()
         textutils._json_responses = {}

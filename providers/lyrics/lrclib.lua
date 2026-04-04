@@ -4,21 +4,14 @@ local lrclib = {}
 
 local BASE_URL = "https://lrclib.net/api"
 
--- CC:Tweaked's JSON parser may convert Unicode codepoints to single Latin-1
--- bytes (e.g. ñ U+00F1 → byte 0xF1). textutils.urlEncode then produces %F1
--- instead of the UTF-8 %C3%B1 that LRCLib expects. This function re-encodes
--- bytes 0x80-0xFF as proper two-byte UTF-8 sequences.
-local function latin1_to_utf8(str)
-    return str:gsub("[\128-\255]", function(c)
-        local b = string.byte(c)
-        return string.char(0xC0 + math.floor(b / 64), 0x80 + (b % 64))
-    end)
-end
-
--- Strip everything outside printable ASCII for a last-resort fuzzy search.
--- "Déjà Vu" → "Dj Vu", which is messy but LRCLib's search handles it.
-local function strip_non_ascii(str)
-    return str:gsub("[\128-\255]+", ""):gsub("%s+", " ")
+-- CC:Tweaked's textutils.urlEncode may mishandle multi-byte UTF-8 sequences
+-- (e.g. interpreting raw bytes as Latin-1 before encoding). This encoder
+-- works directly on bytes: each non-unreserved byte gets percent-encoded,
+-- which is correct for UTF-8 strings since the bytes are already valid UTF-8.
+local function url_encode(str)
+    return str:gsub("([^%w%-_.~ ])", function(c)
+        return string.format("%%%02X", string.byte(c))
+    end):gsub(" ", "%%20")
 end
 
 local function parse_plain(text)
@@ -30,8 +23,8 @@ local function parse_plain(text)
 end
 
 local function fetch_exact(artist, title)
-    local url = BASE_URL .. "/get?artist_name=" .. textutils.urlEncode(latin1_to_utf8(artist))
-        .. "&track_name=" .. textutils.urlEncode(latin1_to_utf8(title))
+    local url = BASE_URL .. "/get?artist_name=" .. url_encode(artist)
+        .. "&track_name=" .. url_encode(title)
 
     local response = http.get(url, {
         ["User-Agent"] = "sptlrx-ng v1.0.0",
@@ -52,7 +45,7 @@ local function fetch_exact(artist, title)
 end
 
 local function fetch_search(query)
-    local url = BASE_URL .. "/search?q=" .. textutils.urlEncode(query)
+    local url = BASE_URL .. "/search?q=" .. url_encode(query)
 
     local response = http.get(url, {
         ["User-Agent"] = "sptlrx-ng v1.0.0",
@@ -86,22 +79,10 @@ function lrclib.setup(config)
 end
 
 function lrclib.get_lyrics(self, artist, title)
-    -- 1. Exact match (latin1→utf8 encoded)
     local data = fetch_exact(artist, title)
 
-    -- 2. Fuzzy search with utf8-fixed query
     if not data then
-        local query = latin1_to_utf8(artist) .. " " .. latin1_to_utf8(title)
-        data = fetch_search(query)
-    end
-
-    -- 3. Last resort: ASCII-only search (strips diacritics etc.)
-    if not data then
-        local stripped = strip_non_ascii(artist) .. " " .. strip_non_ascii(title)
-        stripped = stripped:gsub("^%s+", ""):gsub("%s+$", "")
-        if stripped ~= "" then
-            data = fetch_search(stripped)
-        end
+        data = fetch_search(artist .. " " .. title)
     end
 
     if not data then
@@ -120,7 +101,6 @@ function lrclib.get_lyrics(self, artist, title)
 end
 
 -- Exposed for testing
-lrclib._latin1_to_utf8 = latin1_to_utf8
-lrclib._strip_non_ascii = strip_non_ascii
+lrclib._url_encode = url_encode
 
 return lrclib
