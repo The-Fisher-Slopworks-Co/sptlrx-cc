@@ -4,6 +4,23 @@ local lrclib = {}
 
 local BASE_URL = "https://lrclib.net/api"
 
+-- CC:Tweaked's JSON parser may convert Unicode codepoints to single Latin-1
+-- bytes (e.g. ñ U+00F1 → byte 0xF1). textutils.urlEncode then produces %F1
+-- instead of the UTF-8 %C3%B1 that LRCLib expects. This function re-encodes
+-- bytes 0x80-0xFF as proper two-byte UTF-8 sequences.
+local function latin1_to_utf8(str)
+    return str:gsub("[\128-\255]", function(c)
+        local b = string.byte(c)
+        return string.char(0xC0 + math.floor(b / 64), 0x80 + (b % 64))
+    end)
+end
+
+-- Strip everything outside printable ASCII for a last-resort fuzzy search.
+-- "Déjà Vu" → "Dj Vu", which is messy but LRCLib's search handles it.
+local function strip_non_ascii(str)
+    return str:gsub("[\128-\255]+", ""):gsub("%s+", " ")
+end
+
 local function parse_plain(text)
     local lines = {}
     for line in (text .. "\n"):gmatch("(.-)\n") do
@@ -13,8 +30,8 @@ local function parse_plain(text)
 end
 
 local function fetch_exact(artist, title)
-    local url = BASE_URL .. "/get?artist_name=" .. textutils.urlEncode(artist)
-        .. "&track_name=" .. textutils.urlEncode(title)
+    local url = BASE_URL .. "/get?artist_name=" .. textutils.urlEncode(latin1_to_utf8(artist))
+        .. "&track_name=" .. textutils.urlEncode(latin1_to_utf8(title))
 
     local response = http.get(url, {
         ["User-Agent"] = "sptlrx-ng v1.0.0",
@@ -34,8 +51,7 @@ local function fetch_exact(artist, title)
     return textutils.unserializeJSON(body)
 end
 
-local function fetch_search(artist, title)
-    local query = artist .. " " .. title
+local function fetch_search(query)
     local url = BASE_URL .. "/search?q=" .. textutils.urlEncode(query)
 
     local response = http.get(url, {
@@ -70,10 +86,22 @@ function lrclib.setup(config)
 end
 
 function lrclib.get_lyrics(self, artist, title)
+    -- 1. Exact match (latin1→utf8 encoded)
     local data = fetch_exact(artist, title)
 
+    -- 2. Fuzzy search with utf8-fixed query
     if not data then
-        data = fetch_search(artist, title)
+        local query = latin1_to_utf8(artist) .. " " .. latin1_to_utf8(title)
+        data = fetch_search(query)
+    end
+
+    -- 3. Last resort: ASCII-only search (strips diacritics etc.)
+    if not data then
+        local stripped = strip_non_ascii(artist) .. " " .. strip_non_ascii(title)
+        stripped = stripped:gsub("^%s+", ""):gsub("%s+$", "")
+        if stripped ~= "" then
+            data = fetch_search(stripped)
+        end
     end
 
     if not data then
@@ -90,5 +118,9 @@ function lrclib.get_lyrics(self, artist, title)
 
     return nil, "No lyrics found for " .. artist .. " - " .. title
 end
+
+-- Exposed for testing
+lrclib._latin1_to_utf8 = latin1_to_utf8
+lrclib._strip_non_ascii = strip_non_ascii
 
 return lrclib
