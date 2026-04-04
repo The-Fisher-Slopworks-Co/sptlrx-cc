@@ -1,5 +1,7 @@
 # sptlrx-cc
 
+> This project is 100% AI-generated. Code, tests, docs, all of it. If that bothers you, feel free to move along.
+
 Karaoke-style lyrics in your Minecraft terminal. Talks to Spotify to figure out what's playing, grabs lyrics from LRCLib, and scrolls them in time with the music.
 
 Runs on CC:Tweaked Advanced Computers. Works fine on monitors too.
