@@ -56,6 +56,9 @@ if not lyrics_provider then
     return
 end
 
+-- Set up text filter (transliteration for Cyrillic support)
+renderer.text_filter = require("lib.translit")
+
 -- Initialize renderer and run
 renderer.init()
 sync.run(player, lyrics_provider, renderer, config)

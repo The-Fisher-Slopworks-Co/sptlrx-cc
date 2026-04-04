@@ -1,5 +1,11 @@
 local renderer = {}
 
+-- Pluggable text filter applied to every line before display.
+-- Set to a function(text) -> text to transform lyrics.
+-- Default: nil (no transformation).
+-- Example: renderer.text_filter = require("lib.translit")
+renderer.text_filter = nil
+
 function renderer.word_wrap(text, width)
     if text == "" then return { "" } end
     if #text <= width then return { text } end
@@ -42,9 +48,11 @@ function renderer.center_text(text, width)
 end
 
 function renderer.compute_layout(lines, current_index, screen_width, screen_height)
+    local filter = renderer.text_filter
     local display = {}
     for i, line in ipairs(lines) do
-        local wrapped = renderer.word_wrap(line.text, screen_width)
+        local text = filter and filter(line.text) or line.text
+        local wrapped = renderer.word_wrap(text, screen_width)
         for _, wline in ipairs(wrapped) do
             table.insert(display, {
                 text = wline,
@@ -111,7 +119,8 @@ function renderer.show_message(msg)
     term.setBackgroundColor(colors.black)
     term.clear()
     term.setTextColor(colors.yellow)
-    local centered = renderer.center_text(msg, width)
+    local text = renderer.text_filter and renderer.text_filter(msg) or msg
+    local centered = renderer.center_text(text, width)
     term.setCursorPos(1, math.ceil(height / 2))
     term.write(centered)
 end

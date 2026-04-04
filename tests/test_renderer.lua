@@ -77,6 +77,31 @@ describe("renderer.compute_layout", function()
     end)
 end)
 
+describe("renderer.text_filter", function()
+    it("applies text_filter to layout lines", function()
+        renderer.text_filter = function(text) return text:upper() end
+
+        local lines = {
+            { time_ms = 0, text = "hello" },
+            { time_ms = 5000, text = "world" },
+        }
+        local layout = renderer.compute_layout(lines, 1, 51, 5)
+        expect(layout.visible[layout.center_row].text).to_equal("HELLO")
+
+        renderer.text_filter = nil
+    end)
+
+    it("works without text_filter set", function()
+        renderer.text_filter = nil
+
+        local lines = {
+            { time_ms = 0, text = "hello" },
+        }
+        local layout = renderer.compute_layout(lines, 1, 51, 5)
+        expect(layout.visible[layout.center_row].text).to_equal("hello")
+    end)
+end)
+
 describe("renderer.center_text", function()
     it("centers text in given width", function()
         local result = renderer.center_text("Hello", 11)
