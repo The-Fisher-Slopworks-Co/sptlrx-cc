@@ -20,7 +20,7 @@ local function check_required(raw, path)
 
     local current = raw
     for i, part in ipairs(parts) do
-        if type(current) ~= "table" or current[part] == nil then
+        if type(current) ~= "table" or current[part] == nil or current[part] == "" then
             return "Missing required field: " .. path
         end
         current = current[part]

@@ -91,6 +91,13 @@ describe("config_loader.load", function()
         expect(err).to_contain("spotify")
     end)
 
+    it("returns error when spotify.client_id is empty string", function()
+        local raw = { player = "spotify", lyrics = "lrclib", spotify = { client_id = "", client_secret = "b", refresh_token = "c" } }
+        local cfg, err = config_loader.load(raw)
+        expect(cfg).to_be_nil()
+        expect(err).to_contain("spotify.client_id")
+    end)
+
     it("defaults lyrics to lrclib when missing", function()
         local raw = {
             player = "spotify",

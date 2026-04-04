@@ -1,3 +1,5 @@
+local lrc_parser = require("lib.lrc_parser")
+
 local sync = {}
 
 function sync.get_index(position_ms, previous_index, lines)
@@ -40,6 +42,7 @@ function sync.run(player, lyrics_provider, renderer, config)
     local current_index = 1
     local current_track_id = nil
     local last_poll_time = 0
+    local is_synced = false
 
     local update_timer = os.startTimer(0)
     local interp_timer = nil
@@ -68,9 +71,10 @@ function sync.run(player, lyrics_provider, renderer, config)
                     if state.track_id ~= current_track_id then
                         current_track_id = state.track_id
                         local lines, lerr = lyrics_provider:get_lyrics(state.artist, state.title)
-                        if lines then
+                        if lines and #lines > 0 then
                             current_lines = lines
                             current_index = 1
+                            is_synced = lrc_parser.is_synced(lines)
                             renderer.draw(current_lines, current_index, config.style)
                         else
                             current_lines = nil
@@ -78,23 +82,25 @@ function sync.run(player, lyrics_provider, renderer, config)
                         end
                     end
 
-                    if not state.is_playing and current_lines == nil then
-                        renderer.show_message("Waiting for playback...")
-                    end
                 elseif err then
                     renderer.show_message(err)
                     if err:find("Token expired") then
                         break
                     end
+                else
+                    -- nil state, nil error (nothing playing / 204)
+                    if current_lines == nil then
+                        renderer.show_message("Waiting for playback...")
+                    end
                 end
 
                 update_timer = os.startTimer(update_interval)
-                if current_state and current_state.is_playing and current_lines then
+                if current_state and current_state.is_playing and current_lines and is_synced then
                     interp_timer = os.startTimer(timer_interval)
                 end
 
             elseif param == interp_timer then
-                if current_state and current_lines and current_state.is_playing then
+                if current_state and current_lines and current_state.is_playing and is_synced then
                     local pos = sync.interpolate_position(current_state, last_poll_time)
                     local new_index = sync.get_index(pos, current_index, current_lines)
                     if new_index ~= current_index then
