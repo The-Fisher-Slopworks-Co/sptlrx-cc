@@ -197,4 +197,4 @@ Inspired by [sptlrx](https://github.com/raitonoberu/sptlrx) by raitonoberu.
 
 ## License
 
-AGPL-3.0
+AGPL-3.0-or-later
